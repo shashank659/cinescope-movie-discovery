@@ -1,108 +1,139 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { checkBackendHealth } from '../services/api';
-import { Server, CheckCircle2, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { Flame, TrendingUp, Award, PlayCircle, Calendar, Tag } from 'lucide-react';
+import {
+  getTrendingMovies,
+  getPopularMovies,
+  getTopRatedMovies,
+  getNowPlayingMovies,
+  getUpcomingMovies,
+  getMovieGenres,
+} from '../services/movieApi';
+import { HeroBanner } from '../components/HeroBanner';
+import { MovieShelf } from '../components/MovieShelf';
 
 export const HomePage: React.FC = () => {
-  const { data: health, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['backend-health'],
-    queryFn: checkBackendHealth,
+  // Queries for each discovery section
+  const trendingQuery = useQuery({
+    queryKey: ['movies', 'trending'],
+    queryFn: () => getTrendingMovies(1),
   });
 
+  const popularQuery = useQuery({
+    queryKey: ['movies', 'popular'],
+    queryFn: () => getPopularMovies(1),
+  });
+
+  const topRatedQuery = useQuery({
+    queryKey: ['movies', 'top-rated'],
+    queryFn: () => getTopRatedMovies(1),
+  });
+
+  const nowPlayingQuery = useQuery({
+    queryKey: ['movies', 'now-playing'],
+    queryFn: () => getNowPlayingMovies(1),
+  });
+
+  const upcomingQuery = useQuery({
+    queryKey: ['movies', 'upcoming'],
+    queryFn: () => getUpcomingMovies(1),
+  });
+
+  const genresQuery = useQuery({
+    queryKey: ['movies', 'genres'],
+    queryFn: () => getMovieGenres(),
+  });
+
+  // Pick first movie from trending or popular for the featured hero
+  const featuredMovie = trendingQuery.data?.results?.[0] || popularQuery.data?.results?.[0];
+
   return (
-    <div className="space-y-8">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-br from-neutral-900 via-neutral-900 to-purple-950/40 border border-neutral-800 rounded-2xl p-8 shadow-2xl">
-        <div className="max-w-2xl">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 mb-3">
-            Milestone 1 Complete
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            CineScope Project Initialized
-          </h1>
-          <p className="mt-3 text-base text-neutral-400 leading-relaxed">
-            Full-stack monorepo with React, Vite, Tailwind CSS, TanStack Query, Express, TypeScript, Zod, and Prisma is successfully wired up.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-8 sm:space-y-10 pb-12">
+      {/* Hero Featured Movie */}
+      <HeroBanner
+        movie={featuredMovie}
+        isLoading={trendingQuery.isLoading && !featuredMovie}
+      />
 
-      {/* Backend Health Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2.5">
-              <Server className="w-5 h-5 text-purple-400" />
-              <h2 className="text-lg font-semibold text-white">Backend Health Endpoint</h2>
-            </div>
-            <button
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="p-1.5 rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-750 transition disabled:opacity-50"
-              title="Refresh Health Status"
-            >
-              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-            </button>
+      {/* Genre Pills */}
+      {genresQuery.data?.genres && genresQuery.data.genres.length > 0 && (
+        <section className="space-y-2.5 pt-1" aria-label="Explore Popular Genres">
+          <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+            <Tag className="w-3.5 h-3.5 text-purple-400" />
+            <span>Explore Popular Genres</span>
           </div>
-
-          <div className="text-sm">
-            {isLoading && (
-              <div className="flex items-center space-x-2 text-yellow-400 py-4">
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Checking API health at <code className="text-neutral-300">/api/health</code>...</span>
-              </div>
-            )}
-
-            {isError && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 flex items-start space-x-3">
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">Cannot reach backend API</p>
-                  <p className="text-xs text-red-400 mt-1">{(error as Error)?.message}</p>
-                  <p className="text-xs text-neutral-400 mt-2">Ensure the API server is running on port 5000 (<code className="text-neutral-300">npm run dev:api</code>).</p>
-                </div>
-              </div>
-            )}
-
-            {health && (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span className="font-medium text-xs sm:text-sm">Connected successfully to Express backend</span>
-                </div>
-
-                <div className="bg-neutral-950 rounded-lg p-4 font-mono text-xs text-neutral-300 border border-neutral-800/80 space-y-1">
-                  <div><span className="text-neutral-500">status:</span> &quot;{health.status}&quot;</div>
-                  <div><span className="text-neutral-500">environment:</span> &quot;{health.environment}&quot;</div>
-                  <div><span className="text-neutral-500">uptime:</span> {health.uptime} seconds</div>
-                  <div><span className="text-neutral-500">timestamp:</span> {health.timestamp}</div>
-                </div>
-              </div>
-            )}
+          <div className="flex flex-wrap gap-2">
+            {genresQuery.data.genres.map((genre) => (
+              <Link
+                key={genre.id}
+                to={`/search?q=${encodeURIComponent(genre.name)}`}
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-neutral-900/90 hover:bg-neutral-850 text-neutral-300 hover:text-white border border-neutral-800 hover:border-purple-500/50 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-1 focus:ring-offset-neutral-950 active:scale-95"
+                title={`Explore ${genre.name} movies`}
+              >
+                {genre.name}
+              </Link>
+            ))}
           </div>
-        </div>
+        </section>
+      )}
 
-        {/* Monorepo Structure Summary */}
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
-          <div className="flex items-center space-x-2.5 mb-4">
-            <Layers className="w-5 h-5 text-pink-400" />
-            <h2 className="text-lg font-semibold text-white">Monorepo Packages</h2>
-          </div>
+      {/* Movie Shelves */}
+      <div className="space-y-10">
+        {/* Trending */}
+        <MovieShelf
+          title="Trending This Week"
+          icon={<Flame className="w-5 h-5" />}
+          movies={trendingQuery.data?.results}
+          isLoading={trendingQuery.isLoading}
+          isError={trendingQuery.isError}
+          errorMessage={(trendingQuery.error as Error)?.message}
+          onRetry={() => trendingQuery.refetch()}
+        />
 
-          <ul className="space-y-3 text-sm text-neutral-300">
-            <li className="flex items-start space-x-2">
-              <span className="font-mono text-xs px-2 py-0.5 rounded bg-neutral-800 text-neutral-200 border border-neutral-700">apps/web</span>
-              <span className="text-xs text-neutral-400 leading-snug">React 18 + Vite + Tailwind CSS + React Router + TanStack Query</span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="font-mono text-xs px-2 py-0.5 rounded bg-neutral-800 text-neutral-200 border border-neutral-700">apps/api</span>
-              <span className="text-xs text-neutral-400 leading-snug">Express + TypeScript + Zod + Prisma (SQLite)</span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="font-mono text-xs px-2 py-0.5 rounded bg-neutral-800 text-neutral-200 border border-neutral-700">packages/shared</span>
-              <span className="text-xs text-neutral-400 leading-snug">Shared TypeScript contracts &amp; models</span>
-            </li>
-          </ul>
-        </div>
+        {/* Popular */}
+        <MovieShelf
+          title="Popular Movies"
+          icon={<TrendingUp className="w-5 h-5" />}
+          movies={popularQuery.data?.results}
+          isLoading={popularQuery.isLoading}
+          isError={popularQuery.isError}
+          errorMessage={(popularQuery.error as Error)?.message}
+          onRetry={() => popularQuery.refetch()}
+        />
+
+        {/* Top Rated */}
+        <MovieShelf
+          title="Top Rated Classics"
+          icon={<Award className="w-5 h-5" />}
+          movies={topRatedQuery.data?.results}
+          isLoading={topRatedQuery.isLoading}
+          isError={topRatedQuery.isError}
+          errorMessage={(topRatedQuery.error as Error)?.message}
+          onRetry={() => topRatedQuery.refetch()}
+        />
+
+        {/* Now Playing */}
+        <MovieShelf
+          title="Now Playing in Theatres"
+          icon={<PlayCircle className="w-5 h-5" />}
+          movies={nowPlayingQuery.data?.results}
+          isLoading={nowPlayingQuery.isLoading}
+          isError={nowPlayingQuery.isError}
+          errorMessage={(nowPlayingQuery.error as Error)?.message}
+          onRetry={() => nowPlayingQuery.refetch()}
+        />
+
+        {/* Upcoming */}
+        <MovieShelf
+          title="Upcoming Releases"
+          icon={<Calendar className="w-5 h-5" />}
+          movies={upcomingQuery.data?.results}
+          isLoading={upcomingQuery.isLoading}
+          isError={upcomingQuery.isError}
+          errorMessage={(upcomingQuery.error as Error)?.message}
+          onRetry={() => upcomingQuery.refetch()}
+        />
       </div>
     </div>
   );

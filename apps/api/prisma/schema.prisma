@@ -6,3 +6,44 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  watchlist    Watchlist[]
+  favorites    Favorite[]
+}
+
+model Watchlist {
+  id         String   @id @default(cuid())
+  userId     String
+  movieId    Int
+  movieTitle String
+  posterPath String?
+  releaseDate String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@index([userId])
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  movieId    Int
+  movieTitle String
+  posterPath String?
+  releaseDate String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@index([userId])
+}
