@@ -1,0 +1,28 @@
+{
+  "name": "cinescope-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CineScope movie discovery and wishlist full-stack web application monorepo",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -p \"[{name}]\" -n \"API,WEB\" -c \"cyan,magenta\" \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm --workspace=apps/api run dev",
+    "dev:web": "npm --workspace=apps/web run dev",
+    "build": "npm run build:shared && npm run build:api && npm run build:web",
+    "build:shared": "npm --workspace=packages/shared run build",
+    "build:api": "npm --workspace=apps/api run build",
+    "build:web": "npm --workspace=apps/web run build",
+    "test": "npm --workspace=apps/api run test",
+    "typecheck": "npm run typecheck:shared && npm run typecheck:api && npm run typecheck:web",
+    "typecheck:shared": "npm --workspace=packages/shared run typecheck",
+    "typecheck:api": "npm --workspace=apps/api run typecheck",
+    "typecheck:web": "npm --workspace=apps/web run typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
